@@ -1,6 +1,6 @@
 #!/bin/sh
 redis-server &
 # Generate a new encryption key every time the container starts
-/app/gohole -gkey
+/root/gohole -gkey
 # Run GoHole
-/app/gohole -s -c /root/gohole_config.json
+/root/gohole -s -c /root/gohole_config.json

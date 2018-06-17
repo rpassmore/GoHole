@@ -9,8 +9,8 @@ ENV GOPATH="/app"
 #Install deps
 RUN sh ./install.sh
 # Compile
-RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o gohole .
-#RUN CGO_ENABLED=0 GOOS=linux go build -o gohole .
+#RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o gohole .
+RUN CGO_ENABLED=0 GOOS=linux go build -o gohole .
 #RUN [ "cross-build-end" ]
 
 ###################################
@@ -18,7 +18,9 @@ RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o gohole .
 FROM arm32v6/redis:alpine
 
 WORKDIR /root/
-COPY --from=go-builder /app .
+COPY --from=go-builder /app/gohole .
+COPY blacklists .
+COPY grafana .
 COPY config_example.json .
 COPY docker/init.sh .
 
