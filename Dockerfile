@@ -24,5 +24,4 @@ COPY docker/init.sh .
 
 EXPOSE 53 53/udp
 EXPOSE 443 443/udp
-
-ENTRYPOINT ["./init.sh"]
+#ENTRYPOINT ["./init.sh"]
