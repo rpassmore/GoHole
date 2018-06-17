@@ -1,7 +1,6 @@
 FROM resin/raspberrypi3-golang:latest as go-builder
 
-RUN [ "cross-build-start" ]
-#RUN mkdir /root/gocode/src/GoHole
+#RUN [ "cross-build-start" ]
 #WORKDIR "/root/gocode/src/GoHole"
 WORKDIR /app
 # Copy GoHole code
@@ -10,9 +9,9 @@ ENV GOPATH="/app"
 #Install deps
 RUN sh ./install.sh
 # Compile
-#RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o gohole .
-RUN CGO_ENABLED=0 GOOS=linux go build -o gohole .
-RUN [ "cross-build-end" ]
+RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o gohole .
+#RUN CGO_ENABLED=0 GOOS=linux go build -o gohole .
+#RUN [ "cross-build-end" ]
 
 ###################################
 #
@@ -26,4 +25,4 @@ COPY docker/init.sh .
 EXPOSE 53 53/udp
 EXPOSE 443 443/udp
 
-ENTRYPOINT init.sh
+ENTRYPOINT ["./init.sh"]
