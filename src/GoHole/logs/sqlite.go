@@ -49,7 +49,7 @@ type DomainLog struct {
 //    return instance
 //}
 
-//func SetupDB(){
+func SetupDB(){
 //	sqlCmd := `
 //	create table if not exists queries (id integer not null primary key autoincrement, clientip text, domain text, cached integer, timestamp integer);
 //	`
@@ -58,7 +58,7 @@ type DomainLog struct {
 //	if err != nil{
 //		log.Fatal(err)
 //	}
-//}
+}
 
 func AddQuery(clientip, domain string, cached int, timestamp int64) (error){
 	//tx, err := GetInstance().Begin()
