@@ -5,7 +5,7 @@ FROM resin/raspberrypi3-golang:latest as go-builder
 WORKDIR /app
 # Copy GoHole code
 COPY . .
-#ENV GOPATH="/app"
+ENV GOPATH="/app"
 #Install deps
 RUN sh ./install.sh
 # Compile
