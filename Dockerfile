@@ -5,12 +5,12 @@ FROM resin/raspberrypi3-golang:latest as go-builder
 WORKDIR /app
 # Copy GoHole code
 COPY . .
-ENV GOPATH="/app"
+#ENV GOPATH="/app"
 #Install deps
 RUN sh ./install.sh
 # Compile
-#RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o gohole .
-RUN CGO_ENABLED=0 GOOS=linux go build -o gohole .
+RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o gohole .
+#RUN CGO_ENABLED=0 GOOS=linux go build -o gohole .
 #RUN [ "cross-build-end" ]
 
 ###################################
