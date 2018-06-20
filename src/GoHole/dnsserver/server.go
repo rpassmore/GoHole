@@ -190,7 +190,7 @@ func ListenAndServe(){
 	log.Printf("Starting at %s\n", port)
 	go listenAndServeSecure()
 
-	err := server.ListenAndServe()
+	err = server.ListenAndServe()
 	defer server.Shutdown()
 	if err != nil {
 		log.Fatalf("Failed to start DNS Server: %s\n ", err.Error())
