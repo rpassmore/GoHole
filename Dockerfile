@@ -24,6 +24,7 @@ COPY grafana .
 COPY config_example.json ./config.json
 COPY docker/init.sh .
 
+EXPOSE 24 24/udp
 EXPOSE 53 53/udp
 EXPOSE 443 443/udp
 #ENTRYPOINT ["./init.sh"]
