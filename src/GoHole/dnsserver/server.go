@@ -170,11 +170,10 @@ func ListenAndServe(){
 	go logs.StartStatsLoop()
 
 	dns.HandleFunc(".", handleDnsRequest)
-    net.InterfaceByName("wlan0")
 	// Start DNS server
 	port := config.GetInstance().DNSPort
 
-	ief, err := net.InterfaceByName("eth1")
+	ief, err := net.InterfaceByName("wlan0")
 	if err !=nil{
 		log.Fatal(err)
 	}

@@ -21,7 +21,7 @@ WORKDIR /root/
 COPY --from=go-builder /app/gohole .
 COPY blacklists .
 COPY grafana .
-COPY config_example.json .
+COPY config_example.json ./config.json
 COPY docker/init.sh .
 
 EXPOSE 53 53/udp
