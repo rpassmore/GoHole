@@ -170,10 +170,22 @@ func ListenAndServe(){
 	go logs.StartStatsLoop()
 
 	dns.HandleFunc(".", handleDnsRequest)
-
+    net.InterfaceByName("wlan0")
 	// Start DNS server
 	port := config.GetInstance().DNSPort
-	server := &dns.Server{Addr: ":" + port, Net: "udp"}
+
+	ief, err := net.InterfaceByName("eth1")
+	if err !=nil{
+		log.Fatal(err)
+	}
+	addrs, err := ief.Addrs()
+	if err !=nil{
+		log.Fatal(err)
+	}
+
+	fmt.Println("Using interface", addrs[0])
+	//server := &dns.Server{Addr: ":" + port, Net: "udp"}
+	server := &dns.Server{Addr: addrs[0].String() + ":" + port, Net: "udp"}
 
 	log.Printf("Starting at %s\n", port)
 	go listenAndServeSecure()
