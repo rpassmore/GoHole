@@ -1,5 +1,5 @@
 #!/bin/sh
-redis-server &
+#redis-server &
 # Generate a new encryption key every time the container starts
 /root/gohole -gkey
 # Run GoHole
