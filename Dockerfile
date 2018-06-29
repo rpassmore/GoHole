@@ -1,6 +1,6 @@
 FROM resin/raspberrypi3-golang:latest as go-builder
 
-RUN [ "cross-build-start" ]
+#RUN [ "cross-build-start" ]
 ENV GOPATH="/app/go"
 WORKDIR "/app/go/src/GoHole"
 #WORKDIR /app
@@ -12,7 +12,7 @@ RUN sh ./install.sh
 # Compile
 RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o gohole .
 #RUN CGO_ENABLED=0 GOOS=linux go build -o gohole .
-RUN [ "cross-build-end" ]
+#RUN [ "cross-build-end" ]
 
 ###################################
 #
