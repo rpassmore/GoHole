@@ -7,12 +7,7 @@
 	"UpstreamDNSServer":"8.8.8.8",
 
 	"DomainCacheTime": 1800,
-
-	"RedisDB":{
-		"Host": "localhost",
-		"Port": "6379",
-		"Pass": ""
-	},
+	"DomainPurgeInterval" : 600,
 
 	"Graphite":{
 		"Host": "localhost",

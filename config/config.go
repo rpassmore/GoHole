@@ -14,21 +14,12 @@ type MyConfig struct {
     SecureDNSPort string // listen port for encrypted DNS Server
     EncryptionKey string // Path to the encryption key file
 
-    // RedisDB info
-    RedisDB RedisConfig
-
     // Graphite info
     Graphite GraphiteConfig
 
     UpstreamDNSServer string
     DomainCacheTime int // time to save domains in cache (in seconds)
-}
-
-// DB Config
-type RedisConfig struct {
-    Host string
-    Port string
-    Pass string
+    DomainPurgeInterval int // interval at which expired domains are purged
 }
 
 // Graphite Config
@@ -52,11 +43,7 @@ func CreateInstance(filename string) *MyConfig {
             EncryptionKey: "enc.key",
             UpstreamDNSServer: "8.8.8.8",
             DomainCacheTime: 1800,
-            RedisDB: RedisConfig{
-                Host: "localhost",
-                Port: "6379",
-                Pass: "",
-            },
+            DomainPurgeInterval: 600,
             Graphite: GraphiteConfig{
                 Host: "localhost",
                 Port: 2003,

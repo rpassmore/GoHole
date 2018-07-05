@@ -141,12 +141,8 @@ func main(){
         }
     }
     if *flushCache{
-        err := dnscache.Flush()
-        if err != nil{
-            log.Printf("Error: %s", err)
-        }else{
-            log.Printf("Cache flushed!")
-        }
+        dnscache.Flush()
+        log.Printf("Cache flushed!")
     }
 
     if *blacklistFile != ""{
