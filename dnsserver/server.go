@@ -25,15 +25,13 @@ func parseQuery(clientIp string, m *dns.Msg) {
 		cleanedName := q.Name[0:len(q.Name)-1] // remove the end "."
 		qType := "A"
 		cached := 0
-		var cacheTTL int64 = 1
+		fromBlackList := false
 		isIpv4 := true
 
 		if q.Qtype == dns.TypeA{
-			ip, err = dnscache.GetDomainIPv4(cleanedName)
-			cacheTTL, _ = dnscache.GetTTLDomainIPv4(cleanedName)
+			ip, fromBlackList, err = dnscache.GetDomainIPv4(cleanedName)
 		}else if q.Qtype == dns.TypeAAAA{
-			ip, err = dnscache.GetDomainIPv6(cleanedName)
-			cacheTTL, _ = dnscache.GetTTLDomainIPv6(cleanedName)
+			ip, fromBlackList, err = dnscache.GetDomainIPv6(cleanedName)
 			qType = "AAAA"
 			isIpv4 = false
 		}
@@ -80,14 +78,14 @@ func parseQuery(clientIp string, m *dns.Msg) {
 
 		// Add logs
 		logs.AddQuery(clientIp, cleanedName, cached, time.Now())
-		
+
 		isBlocked := false
 		isCached := true
 		if cached == 0{
 			isCached = false
 		}else{
 			// if it was cached and TTL is -1 (<0), then it is a blocked domain
-			if cacheTTL < 0{
+			if fromBlackList {
 				// is a blocked domain
 				isBlocked = true
 			}
@@ -163,7 +161,7 @@ func listenAndServeSecure(){
 func ListenAndServe(){
 
 	// add go.hole domain to our cache :)
-	dnscache.AddDomainIPv4("go.hole", config.GetInstance().ServerIP, 0)
+//	dnscache.AddDomainIPv4("go.hole", config.GetInstance().ServerIP, 0)
 
 	// start the graphite statistics loop
 	go logs.StartStatsLoop()

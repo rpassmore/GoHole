@@ -8,12 +8,6 @@
 
 	"DomainCacheTime": 1800,
 
-	"RedisDB":{
-		"Host": "localhost",
-		"Port": "6379",
-		"Pass": ""
-	},
-
 	"Graphite":{
 		"Host": "localhost",
 		"Port": 2003

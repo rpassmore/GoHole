@@ -3,29 +3,19 @@ package dnscache
 import (
 	"time"
 
-    "github.com/go-redis/redis"
-
-    "GoHole/config"
+	"github.com/patrickmn/go-cache"
+	"errors"
+	"GoHole/config"
 )
 
-var instance *redis.Client = nil
+var instance *cache.Cache = nil
 
-func GetInstance() *redis.Client {
+func GetInstance() *cache.Cache {
     if instance == nil {
-    	host := config.GetInstance().RedisDB.Host
-    	port := config.GetInstance().RedisDB.Port
-    	addr := host + ":" + port
-        instance = redis.NewClient(&redis.Options{
-			Addr:     addr,
-			Password: config.GetInstance().RedisDB.Pass,
-			DB:       0,  // use default DB
-		})
-
-		_, err := instance.Ping().Result()
-		if err != nil {
-			panic(err)
-		}
-    }
+		expireTime := time.Duration(config.GetInstance().DomainCacheTime)
+		//purgeTime := time.Duration(config.GetInstance().Cache.PurgeTime)
+    	instance = cache.New(expireTime*time.Minute, 10*time.Minute)
+    	}
 
     return instance
 }
@@ -39,81 +29,54 @@ func IPv6Preffix() string{
 
 
 func AddDomainIPv4(domain, ip string, expiration int) (error){
-	err := GetInstance().Set(IPv4Preffix() + domain, ip, 0).Err()
-	if err != nil {
-		return err
+	if expiration > 0 {
+		GetInstance().Set(IPv4Preffix() + domain, ip, cache.DefaultExpiration)
+	} else {
+		GetInstance().Set(IPv4Preffix() + domain, ip, cache.NoExpiration)
 	}
-
-	// set expiration time (in seconds)
-	if expiration > 0{
-		expDuration := time.Duration(expiration)*time.Second
-		err = GetInstance().Expire(IPv4Preffix() + domain, expDuration).Err()
-		if err != nil {
-			return err
-		}
-	}
-
 	return nil
 }
 
-func AddDomainIPv6(domain, ip string, expiration int) (error){
-	err := GetInstance().Set(IPv6Preffix() + domain, ip, 0).Err()
-	if err != nil {
-		return err
+func AddDomainIPv6(domain, ip string, expiration int) (error) {
+	if expiration > 0 {
+		GetInstance().Set(IPv6Preffix()+domain, ip, cache.DefaultExpiration)
+	} else {
+		GetInstance().Set(IPv6Preffix()+domain, ip, cache.NoExpiration)
 	}
-
-	// set expiration time (in seconds)
-	if expiration > 0{
-		expDuration := time.Duration(expiration)*time.Second
-		err = GetInstance().Expire(IPv6Preffix() + domain, expDuration).Err()
-		if err != nil {
-			return err
-		}
-	}
-
 	return nil
 }
 
 func DeleteDomainIPv4(domain string) (error){
-	err := GetInstance().Del(IPv4Preffix() + domain).Err()
-	if err != nil {
-		return err
-	}
-
+	GetInstance().Delete(IPv4Preffix() + domain)
 	return nil
 }
 
 func DeleteDomainIPv6(domain string) (error){
-	err := GetInstance().Del(IPv6Preffix() + domain).Err()
-	if err != nil {
-		return err
-	}
-
+	GetInstance().Delete(IPv6Preffix() + domain)
 	return nil
 }
 
-func GetDomainIPv4(domain string) (string, error){
-	ip, err := GetInstance().Get(IPv4Preffix() + domain).Result()
-	return ip, err
+func GetDomainIPv4(domain string) (string, bool, error){
+	ip, exp, found := GetInstance().GetWithExpiration(IPv4Preffix() + domain)
+	if found == true {
+		return ip.(string), exp.IsZero(), nil
+	} else {
+		return "", false, errors.New("domain " + domain + " not found")
+	}
+
 }
 
-func GetDomainIPv6(domain string) (string, error){
-	ip, err := GetInstance().Get(IPv6Preffix() + domain).Result()
-	return ip, err
+
+func GetDomainIPv6(domain string) (string, bool, error){
+	ip, exp, found := GetInstance().GetWithExpiration(IPv6Preffix() + domain)
+	if found == true {
+		return ip.(string), exp.IsZero(), nil
+	} else {
+		return "", false, errors.New("domain " + domain + " not found")
+	}
 }
 
-func GetTTLDomainIPv4(domain string) (int64, error){
-	t, err := GetInstance().TTL(IPv4Preffix() + domain).Result()
-	return int64(t), err
+func Flush() {
+	GetInstance().Flush()
 }
-
-func GetTTLDomainIPv6(domain string) (int64, error){
-	t, err := GetInstance().TTL(IPv6Preffix() + domain).Result()
-	return int64(t), err
-}
-
-func Flush() (error){
-	return GetInstance().FlushDB().Err()
-}
-
 
