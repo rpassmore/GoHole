@@ -13,8 +13,8 @@ var instance *cache.Cache = nil
 func GetInstance() *cache.Cache {
     if instance == nil {
 		expireTime := time.Duration(config.GetInstance().DomainCacheTime)
-		//purgeTime := time.Duration(config.GetInstance().Cache.PurgeTime)
-    	instance = cache.New(expireTime*time.Minute, 10*time.Minute)
+		purgeTime := time.Duration(config.GetInstance().DomainPurgeInterval)
+    	instance = cache.New(expireTime*time.Second, purgeTime*time.Second)
     	}
 
     return instance
