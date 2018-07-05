@@ -87,7 +87,7 @@ func main(){
     // example: gohole -lc
     listclients := flag.Bool("lc", false, "Show clients")
 
-    listLimit := flag.String("limit", "100", "Number of registers to show for arguments: -lip")
+    listLimit := flag.Int("limit", 100, "Number of registers to show for arguments: -lip")
 
     // Flush queries log
     // example: gohole -flog
@@ -104,7 +104,6 @@ func main(){
     if *port != ""{
         config.GetInstance().DNSPort = *port
     }
-    logs.SetupDB() // prepare logs SQLiteDB
 
     encryption.CreateInstance()
     if *gkey{
@@ -142,12 +141,8 @@ func main(){
         }
     }
     if *flushCache{
-        err := dnscache.Flush()
-        if err != nil{
-            log.Printf("Error: %s", err)
-        }else{
-            log.Printf("Cache flushed!")
-        }
+        dnscache.Flush()
+        log.Printf("Cache flushed!")
     }
 
     if *blacklistFile != ""{
@@ -165,7 +160,7 @@ func main(){
             table := tablewriter.NewWriter(os.Stdout)
             table.SetHeader([]string{"Client IP", "Domain", "Date"})
             for _, q := range queries{
-                toTime := time.Unix(q.Timestamp, 0).Format(time.RFC1123)
+                toTime := q.Timestamp.Format(time.RFC1123)
                 table.Append([]string{q.ClientIp, q.Domain, toTime})
             }
             table.Render()
@@ -179,7 +174,7 @@ func main(){
             table := tablewriter.NewWriter(os.Stdout)
             table.SetHeader([]string{"Client IP", "Domain", "Date"})
             for _, q := range queries{
-                toTime := time.Unix(q.Timestamp, 0).Format(time.RFC1123)
+                toTime := q.Timestamp.Format(time.RFC1123)
                 table.Append([]string{q.ClientIp, q.Domain, toTime})
             }
             table.Render()
