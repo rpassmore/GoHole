@@ -11,11 +11,11 @@ import (
 var instance *cache.Cache = nil
 
 func GetInstance() *cache.Cache {
-    if instance == nil {
+	if instance == nil {
 		expireTime := time.Duration(config.GetInstance().DomainCacheTime)
 		purgeTime := time.Duration(config.GetInstance().DomainPurgeInterval)
     	instance = cache.New(expireTime*time.Second, purgeTime*time.Second)
-    	}
+    }
 
     return instance
 }
@@ -28,22 +28,20 @@ func IPv6Preffix() string{
 }
 
 
-func AddDomainIPv4(domain, ip string, expiration int) (error){
-	if expiration > 0 {
+func AddDomainIPv4(domain, ip string, expires bool) {
+	if expires {
 		GetInstance().Set(IPv4Preffix() + domain, ip, cache.DefaultExpiration)
 	} else {
 		GetInstance().Set(IPv4Preffix() + domain, ip, cache.NoExpiration)
 	}
-	return nil
 }
 
-func AddDomainIPv6(domain, ip string, expiration int) (error) {
-	if expiration > 0 {
+func AddDomainIPv6(domain, ip string, expires bool) {
+	if expires {
 		GetInstance().Set(IPv6Preffix()+domain, ip, cache.DefaultExpiration)
 	} else {
 		GetInstance().Set(IPv6Preffix()+domain, ip, cache.NoExpiration)
 	}
-	return nil
 }
 
 func DeleteDomainIPv4(domain string) (error){

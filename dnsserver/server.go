@@ -65,9 +65,9 @@ func parseQuery(clientIp string, m *dns.Msg) {
 		    	if len(ans) == 5 && ans[3] == qType{
 		    		// Save on cache
 		    		if q.Qtype == dns.TypeA{
-		    			dnscache.AddDomainIPv4(cleanedName, ans[4], config.GetInstance().DomainCacheTime)
+		    			dnscache.AddDomainIPv4(cleanedName, ans[4], true)
 					}else if q.Qtype == dns.TypeAAAA{
-						dnscache.AddDomainIPv6(cleanedName, ans[4], config.GetInstance().DomainCacheTime)
+						dnscache.AddDomainIPv6(cleanedName, ans[4], true)
 					}
 		    	}
 		    }
@@ -161,7 +161,7 @@ func listenAndServeSecure(){
 func ListenAndServe(){
 
 	// add go.hole domain to our cache :)
-//	dnscache.AddDomainIPv4("go.hole", config.GetInstance().ServerIP, 0)
+	dnscache.AddDomainIPv4("go.hole", config.GetInstance().ServerIP, false)
 
 	// start the graphite statistics loop
 	go logs.StartStatsLoop()
