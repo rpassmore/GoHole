@@ -79,8 +79,7 @@ func parseQuery(clientIp string, m *dns.Msg) {
 		}
 
 		// Add logs
-		now := time.Now().Unix()
-		logs.AddQuery(clientIp, cleanedName, cached, now)
+		logs.AddQuery(clientIp, cleanedName, cached, time.Now())
 		
 		isBlocked := false
 		isCached := true
