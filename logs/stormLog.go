@@ -12,7 +12,7 @@ type QueryLog struct {
   Id        int `storm:"id,increment"`
   ClientIp  string `storm:"index"`
   Domain    string `storm:"index"`
-  Cached    int
+  Cached    bool
   Timestamp time.Time `storm:"index"`
 }
 
@@ -52,14 +52,14 @@ func GetInstance() *storm.DB {
   return instance
 }
 
-func AddQuery(clientip string, domain string, cached int, timestamp time.Time) (error) {
-  queryLog := QueryLog{ClientIp: clientip, Domain: domain, Cached: cached, Timestamp: timestamp}
+func AddQuery(clientIp string, domain string, cached bool, timestamp time.Time) (error) {
+  queryLog := QueryLog{ClientIp: clientIp, Domain: domain, Cached: cached, Timestamp: timestamp}
   err := GetInstance().Save(&queryLog)
   if err != nil {
     return err
   }
 
-  err = AddClientIp(clientip)
+  err = AddClientIp(clientIp)
   if err != nil {
     return err
   }

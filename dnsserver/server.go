@@ -17,21 +17,18 @@ import (
 
 func parseQuery(clientIp string, m *dns.Msg) {
 	for _, q := range m.Question {
-
-		log.Printf("Query for %s from %s", q.Name, clientIp)
-
 		var err error = nil
-		var ip string = ""
+		var ip = ""
 		cleanedName := q.Name[0:len(q.Name)-1] // remove the end "."
 		qType := "A"
-		cached := 0
-		fromBlackList := false
+		isCached := false
+		isBlocked := false
 		isIpv4 := true
 
 		if q.Qtype == dns.TypeA{
-			ip, fromBlackList, err = dnscache.GetDomainIPv4(cleanedName)
+			ip, isBlocked, err = dnscache.GetDomainIPv4(cleanedName)
 		}else if q.Qtype == dns.TypeAAAA{
-			ip, fromBlackList, err = dnscache.GetDomainIPv6(cleanedName)
+			ip, isBlocked, err = dnscache.GetDomainIPv6(cleanedName)
 			qType = "AAAA"
 			isIpv4 = false
 		}
@@ -41,7 +38,7 @@ func parseQuery(clientIp string, m *dns.Msg) {
 			if err == nil {
 				m.Answer = append(m.Answer, rr)
 			}
-			cached = 1
+			isCached = true
 		}else{
 			// Request to a DNS server
 			c := new(dns.Client)
@@ -65,32 +62,22 @@ func parseQuery(clientIp string, m *dns.Msg) {
 		    	if len(ans) == 5 && ans[3] == qType{
 		    		// Save on cache
 		    		if q.Qtype == dns.TypeA{
-		    			dnscache.AddDomainIPv4(cleanedName, ans[4], config.GetInstance().DomainCacheTime)
+		    			dnscache.AddDomainIPv4(cleanedName, ans[4], true)
 					}else if q.Qtype == dns.TypeAAAA{
-						dnscache.AddDomainIPv6(cleanedName, ans[4], config.GetInstance().DomainCacheTime)
+						dnscache.AddDomainIPv6(cleanedName, ans[4], true)
 					}
 		    	}
 		    }
 		    // Set answer for the client
 		    m.Answer = r.Answer
-		    cached = 0
+		    isCached = false
 		}
 
 		// Add logs
-		logs.AddQuery(clientIp, cleanedName, cached, time.Now())
-
-		isBlocked := false
-		isCached := true
-		if cached == 0{
-			isCached = false
-		}else{
-			// if it was cached and TTL is -1 (<0), then it is a blocked domain
-			if fromBlackList {
-				// is a blocked domain
-				isBlocked = true
-			}
-		}
+		logs.AddQuery(clientIp, cleanedName, isCached, time.Now())
 		go logs.AddQueryToGraphite(isBlocked, isIpv4, isCached)
+
+		log.Printf("Query for %s from %s, blocked : %s, cached : %s", q.Name, clientIp, isBlocked, isCached)
 	}
 }
 
@@ -134,13 +121,13 @@ func handleSecureDnsRequest(conn *net.UDPConn, buf []byte, addr net.UDPAddr){
 }
 
 func listenAndServeSecure(){
-	serveraddr, err := net.ResolveUDPAddr("udp",":"+ config.GetInstance().SecureDNSPort)
+	serverAddr, err := net.ResolveUDPAddr("udp",":"+ config.GetInstance().SecureDNSPort)
 	if err != nil {
-		log.Fatal("Failed to start DNS Secure Server: %s\n", err)
+		log.Fatalf("Failed to start DNS Secure Server: %s\n", err)
 	}
-	conn, err := net.ListenUDP("udp", serveraddr)
+	conn, err := net.ListenUDP("udp", serverAddr)
 	if err != nil {
-		log.Fatal("Failed to start DNS Secure Server: %s\n", err)
+		log.Fatalf("Failed to start DNS Secure Server: %s\n", err)
 	}
 	defer conn.Close()
 
@@ -161,7 +148,7 @@ func listenAndServeSecure(){
 func ListenAndServe(){
 
 	// add go.hole domain to our cache :)
-//	dnscache.AddDomainIPv4("go.hole", config.GetInstance().ServerIP, 0)
+	dnscache.AddDomainIPv4("go.hole", config.GetInstance().ServerIP, false)
 
 	// start the graphite statistics loop
 	go logs.StartStatsLoop()
