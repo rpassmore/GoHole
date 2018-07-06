@@ -1,3 +1,4 @@
+#!bin/sh
 go get github.com/miekg/dns
 go get github.com/patrickmn/go-cache
 go get github.com/asdine/storm

@@ -1,4 +1,5 @@
 FROM resin/raspberrypi3-golang:latest as go-builder
+#FROM resin/amd64-golang as go-builder
 
 #RUN [ "cross-build-start" ]
 ENV GOPATH="/app/go"
@@ -15,15 +16,17 @@ RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o gohole .
 
 ###################################
 #
-FROM arm32v6/alpine
+#FROM arm32v6/alpine
+FROM resin/raspberrypi3-alpine
+#FROM alpine
+#FROM scratch
 
 WORKDIR /root/
 COPY --from=go-builder /app/go/src/GoHole/gohole .
 COPY blacklists .
 COPY grafana .
-COPY config_example.json ./config.json
-COPY docker/init.sh .
+COPY config_example.json ./gohole_config.json
 
 EXPOSE 53 53/udp
 EXPOSE 443 443/udp
-ENTRYPOINT ["./init.sh"]
+ENTRYPOINT ["/root/gohole", "-gkey", "-s", "-c", "/root/gohole_config.json", "-abl", "/root/list.txt"]
