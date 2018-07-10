@@ -167,8 +167,9 @@ func ListenAndServe(){
 		log.Fatal(err)
 	}
 
-	fmt.Println("Using interface", addrs[0])
-	server := &dns.Server{Addr: "192.168.1.53" /*addrs[0].String()*/ + ":" + port, Net: "udp"}
+	externalIpAddr := addrs[0].String()[:strings.Index(addrs[0].String(), "/")]
+	fmt.Println("Using interface", externalIpAddr)
+	server := &dns.Server{Addr: externalIpAddr + ":" + port, Net: "udp"}
 
 	//server := &dns.Server{Addr: ":" + port, Net: "udp"}
 
