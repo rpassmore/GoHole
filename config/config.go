@@ -9,6 +9,7 @@ import (
 // MyConfig struct
 // This is the struct that the config.json must have
 type MyConfig struct {
+    Interface string // the external interface to listen on
     ServerIP string // the DNS server IP to redirect blocked ads
     DNSPort string // listen on port
     SecureDNSPort string // listen port for encrypted DNS Server
@@ -37,6 +38,7 @@ func CreateInstance(filename string) *MyConfig {
         log.Printf("Error loading config file: %s\nUsing default config.", err)
         // use defaults
         instance = &MyConfig{
+            Interface: "wlan0",
             ServerIP: "0.0.0.0",
             DNSPort: "53",
             SecureDNSPort: "443",
