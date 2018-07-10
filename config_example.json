@@ -1,4 +1,5 @@
 {
+	"Interface": "wlan0",
 	"ServerIP": "0.0.0.0",
 	"DNSPort": "53",
 	"SecureDNSPort": "443",

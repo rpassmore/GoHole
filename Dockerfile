@@ -25,9 +25,9 @@ WORKDIR /root/
 COPY --from=go-builder /app/go/src/GoHole/gohole .
 COPY blacklists .
 COPY grafana .
-COPY config_example.json ./gohole_config.json
+COPY config_example.json ./config.json
 
 EXPOSE 53 53/udp
 EXPOSE 443 443/udp
-#ENTRYPOINT ["/root/gohole", "-gkey", "-s", "-c", "/root/gohole_config.json", "-abl", "/root/list.txt"]
+#ENTRYPOINT ["/root/gohole", "-gkey", "-s", "-c", "/root/config.json", "-abl", "/root/list.txt"]
 CMD /bin/sh
