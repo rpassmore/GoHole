@@ -1,3 +1,5 @@
+###################################
+# Build container
 FROM resin/raspberrypi3-golang:latest as go-builder
 #FROM resin/amd64-golang as go-builder
 
@@ -10,12 +12,12 @@ COPY . .
 #Install deps
 RUN sh ./install.sh
 # Compile, strip debug info -ldflags="-s -w"
-#RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -a -installsuffix cgo -o gohole .
-RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o gohole .
+RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -a -installsuffix cgo -o gohole .
+#RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o gohole .
 #RUN [ "cross-build-end" ]
 
 ###################################
-#
+# Execution container
 #FROM arm32v6/alpine
 #FROM alpine
 FROM scratch
@@ -28,4 +30,4 @@ COPY config_example.json ./config.json
 
 EXPOSE 53 53/udp
 EXPOSE 443 443/udp
-ENTRYPOINT ["/root/gohole", "-gkey", "-s", "-c", "/root/config.json", "-abl", "/root/list.txt"]
+ENTRYPOINT ["/root/gohole", "-gkey", "-s", "-c", "/root/config.json", "-abl", "/root/blacklists/list.txt"]
