@@ -18,9 +18,9 @@ RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -a -installsuffix cgo -o 
 
 ###################################
 # Execution container
-FROM arm32v6/alpine
+#FROM arm32v6/alpine
 #FROM alpine
-#FROM scratch
+FROM scratch
 
 WORKDIR /root/
 COPY --from=go-builder /app/go/src/GoHole/gohole .
