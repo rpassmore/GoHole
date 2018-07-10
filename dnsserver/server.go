@@ -168,7 +168,7 @@ func ListenAndServe(){
 	}
 
 	fmt.Println("Using interface", addrs[0])
-	server := &dns.Server{Addr: addrs[0].String() + ":" + port, Net: "udp"}
+	server := &dns.Server{Addr: "192.168.1.53" /*addrs[0].String()*/ + ":" + port, Net: "udp"}
 
 	//server := &dns.Server{Addr: ":" + port, Net: "udp"}
 
