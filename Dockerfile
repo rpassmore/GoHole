@@ -30,4 +30,4 @@ COPY config_example.json ./config.json
 
 EXPOSE 53 53/udp
 EXPOSE 443 443/udp
-ENTRYPOINT ["/root/gohole", "-gkey", "-s", "-c", "/root/config.json", "-abl", "/root/blacklists/list.txt"]
+ENTRYPOINT ["/root/gohole", "-gkey", "-s", "-c", "/root/config.json", "-abl", "/root/list.txt"]
