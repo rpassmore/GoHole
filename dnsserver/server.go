@@ -157,7 +157,7 @@ func ListenAndServe(){
 	// Start DNS server
 	port := config.GetInstance().DNSPort
 
-	/*
+
 	ief, err := net.InterfaceByName("wlan0")
 	if err !=nil{
 		log.Fatal(err)
@@ -169,14 +169,14 @@ func ListenAndServe(){
 
 	fmt.Println("Using interface", addrs[0])
 	server := &dns.Server{Addr: addrs[0].String() + ":" + port, Net: "udp"}
-	*/
-	server := &dns.Server{Addr: ":" + port, Net: "udp"}
+
+	//server := &dns.Server{Addr: ":" + port, Net: "udp"}
 
 
 	log.Printf("Starting at %s\n", port)
-	go listenAndServeSecure()
+	//go listenAndServeSecure()
 
-	err := server.ListenAndServe()
+	err = server.ListenAndServe()
 	defer server.Shutdown()
 	if err != nil {
 		log.Fatalf("Failed to start DNS Server: %s\n ", err.Error())
