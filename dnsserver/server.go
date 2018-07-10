@@ -158,7 +158,7 @@ func ListenAndServe(){
 	port := config.GetInstance().DNSPort
 
 
-	ief, err := net.InterfaceByName("wlan0")
+	ief, err := net.InterfaceByName(config.GetInstance().Interface)
 	if err !=nil{
 		log.Fatal(err)
 	}
@@ -175,7 +175,7 @@ func ListenAndServe(){
 
 
 	log.Printf("Starting at %s\n", port)
-	//go listenAndServeSecure()
+	go listenAndServeSecure()
 
 	err = server.ListenAndServe()
 	defer server.Shutdown()
