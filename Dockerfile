@@ -17,9 +17,8 @@ RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o gohole .
 ###################################
 #
 #FROM arm32v6/alpine
-FROM resin/raspberrypi3-alpine
 #FROM alpine
-#FROM scratch
+FROM scratch
 
 WORKDIR /root/
 COPY --from=go-builder /app/go/src/GoHole/gohole .
@@ -29,5 +28,4 @@ COPY config_example.json ./config.json
 
 EXPOSE 53 53/udp
 EXPOSE 443 443/udp
-#ENTRYPOINT ["/root/gohole", "-gkey", "-s", "-c", "/root/config.json", "-abl", "/root/list.txt"]
-CMD /bin/sh
+ENTRYPOINT ["/root/gohole", "-gkey", "-s", "-c", "/root/config.json", "-abl", "/root/list.txt"]
