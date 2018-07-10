@@ -30,3 +30,4 @@ COPY config_example.json ./gohole_config.json
 EXPOSE 53 53/udp
 EXPOSE 443 443/udp
 #ENTRYPOINT ["/root/gohole", "-gkey", "-s", "-c", "/root/gohole_config.json", "-abl", "/root/list.txt"]
+CMD /bin/sh
