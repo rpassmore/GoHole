@@ -154,15 +154,30 @@ func ListenAndServe(){
 	go logs.StartStatsLoop()
 
 	dns.HandleFunc(".", handleDnsRequest)
-
 	// Start DNS server
 	port := config.GetInstance().DNSPort
-	server := &dns.Server{Addr: ":" + port, Net: "udp"}
+
+
+	ief, err := net.InterfaceByName(config.GetInstance().Interface)
+	if err !=nil{
+		log.Fatal(err)
+	}
+	addrs, err := ief.Addrs()
+	if err !=nil{
+		log.Fatal(err)
+	}
+
+	externalIpAddr := addrs[0].String()[:strings.Index(addrs[0].String(), "/")]
+	fmt.Println("Using interface", externalIpAddr)
+	server := &dns.Server{Addr: externalIpAddr + ":" + port, Net: "udp"}
+
+	//server := &dns.Server{Addr: ":" + port, Net: "udp"}
+
 
 	log.Printf("Starting at %s\n", port)
 	go listenAndServeSecure()
 
-	err := server.ListenAndServe()
+	err = server.ListenAndServe()
 	defer server.Shutdown()
 	if err != nil {
 		log.Fatalf("Failed to start DNS Server: %s\n ", err.Error())
