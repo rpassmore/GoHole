@@ -4,7 +4,7 @@ A fork of [GoHole](https://github.com/segura2010/GoHole) for the raspberypi
 GoHole is a DNS server written in Golang with the same idea than the [PiHole](https://pi-hole.net), blocking advertisements's and tracking's domains.
 
 The use of sql-lite as the query DB has been replaced with bolt DB and the use of Redis DB as a cache has been replaced with go-cache
-This allows a statically linked binary to be produced that builds into a small 6M docker container built using [resinio](https://resin.io/) 
+This allows a statically linked binary to be produced that builds into a small 6M docker container built using Docker and [resinio](https://resin.io/) 
 
 
 ### Usage
