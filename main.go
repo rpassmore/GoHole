@@ -121,14 +121,8 @@ func main(){
     }
 
     if *domainAdd != "" && *ipv4 != "" && *ipv6 != ""{
-        err := dnscache.AddDomainIPv4(*domainAdd, *ipv4, 0)
-        if err != nil{
-            log.Printf("Error: %s", err)
-        }
-        err = dnscache.AddDomainIPv6(*domainAdd, *ipv6, 0)
-        if err != nil{
-            log.Printf("Error: %s", err)
-        }
+        dnscache.AddDomainIPv4(*domainAdd, *ipv4, false)
+        dnscache.AddDomainIPv6(*domainAdd, *ipv6, false)
     }
     if *domainDelete != ""{
         err := dnscache.DeleteDomainIPv4(*domainDelete)
