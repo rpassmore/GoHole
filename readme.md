@@ -92,11 +92,4 @@ You can export the Grafana dashboard I used in the image using the [grafana/GoHo
 You can use the Graphite+Grafana Docker image from: https://github.com/kamon-io/docker-grafana-graphite
 
 
-**Tested on Go 1.8.3 and 1.9.2**
-
-
-git push resin rpi-docker:master
-resin build --logs --nocache --deviceType raspberrypi3 --arch armhf
-sudo ./gohole -s -c ../config_example.json -abl ../blacklists/list.txt -gkey
-docker build -t rpassmore/gohole ./
-docker run -ti rpassmore/gohole:latest
+**Tested on Go 1.10.3**
