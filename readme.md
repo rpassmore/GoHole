@@ -1,16 +1,11 @@
 # GoHole
 
+A fork of [GoHole](https://github.com/segura2010/GoHole) for the raspberypi 
 GoHole is a DNS server written in Golang with the same idea than the [PiHole](https://pi-hole.net), blocking advertisements's and tracking's domains.
 
-It uses a Redis DB as cache.
+The use of sql-lite as the query DB has been replaced with bolt DB and the use of Redis DB as a cache has been replaced with go-cache
+This allows a statically linked binary to be produced that builds into a small 6M docker container built using [resinio](https://resin.io/) 
 
-### Installation
-
-1. Clone this repository and rename the folder to GoHole if it is not the name.
-2. Run the install script `install.sh` to install all the dependencies.
-3. Compile using Makefile (`make`). Or run `make install` to install (you should have included your $GOPATH/bin to your $PATH).
-
-Finally, run using the executable for your platform.
 
 ### Usage
 
@@ -82,19 +77,9 @@ You can see the stats and logs by using the following command line arguments:
 
 ### Docker
 
-You can use GoHole in a Docker container. To do that, you can use the Docker image: https://hub.docker.com/r/segura2010/gohole/ running:
-
-`docker pull segura2010/gohole`
-
-Once you pull the Docker image, you can run a container using the command: 
-
-`docker run -d --name gohole -p 53:53/udp --restart=unless-stopped gohole/master`
-
-Then, you will have a Docker container running GoHole. But it does not install any blacklist (domains will not be blocked). In order to do that, you must open a shell in the container with:
-
-`docker exec -it gohole /bin/bash`
-
-After that, you can run `gohole -abl blacklists/list.txt` to set up the blocked domains.
+You can use GoHole in a Docker container. 
+A DockerFile is availble in the src code, this builds a docker image for raspberypi 
+I'm using [resinio](https://resin.io/) to build and manage the containers.
 
 ### Metrics & Statistics on Graphite
 
@@ -108,3 +93,10 @@ You can use the Graphite+Grafana Docker image from: https://github.com/kamon-io/
 
 
 **Tested on Go 1.8.3 and 1.9.2**
+
+
+git push resin rpi-docker:master
+resin build --logs --nocache --deviceType raspberrypi3 --arch armhf
+sudo ./gohole -s -c ../config_example.json -abl ../blacklists/list.txt -gkey
+docker build -t rpassmore/gohole ./
+docker run -ti rpassmore/gohole:latest
