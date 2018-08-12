@@ -22,11 +22,11 @@ import (
 )
 
 /* Update version number on each release:
-    Given a version number x.y.z, increment the:
+   Given a version number x.y.z, increment the:
 
-    x - major release
-    y - minor release
-    z - build number
+   x - major release
+   y - minor release
+   z - build number
 */
 const GOHOLE_VERSION = "1.1.0"
 
@@ -86,7 +86,7 @@ var (
 	// Show clients
 	// example: gohole -lc
 	listclients = flag.Bool("lc", false, "Show clients")
-	listLimit = flag.Int("limit", 100, "Number of registers to show for arguments: -lip")
+	listLimit   = flag.Int("limit", 100, "Number of registers to show for arguments: -lip")
 
 	// Flush queries log
 	// example: gohole -flog

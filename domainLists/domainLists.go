@@ -1,6 +1,6 @@
 /**
   Manage Black lists and white lists from a DB
- */
+*/
 
 package domainLists
 
@@ -15,7 +15,7 @@ type DomainList struct {
 
 type ListEntry struct {
 	Domain string `storm:"id,unique"`
-	Allow bool
+	Allow  bool
 }
 
 func Open() *DomainList {
@@ -37,18 +37,17 @@ func (domainList *DomainList) Close() {
 	}
 }
 
-
-func (domainList *DomainList) WhiteListDomain(domain string) (error) {
-	whiteListEntry := ListEntry{Domain:domain, Allow:true}
+func (domainList *DomainList) WhiteListDomain(domain string) error {
+	whiteListEntry := ListEntry{Domain: domain, Allow: true}
 	return domainList.db.Save(&whiteListEntry)
 }
 
-func (domainList *DomainList) BlackListDomain(domain string) (error) {
-	whiteListEntry := ListEntry{Domain:domain, Allow:false}
+func (domainList *DomainList) BlackListDomain(domain string) error {
+	whiteListEntry := ListEntry{Domain: domain, Allow: false}
 	return domainList.db.Save(&whiteListEntry)
 }
 
-func (domainList *DomainList) RemoveDomain(domain string) (error) {
+func (domainList *DomainList) RemoveDomain(domain string) error {
 	domainListEntry, err := domainList.FindDomain(domain)
 	if err != nil {
 		err = domainList.db.Drop(domainListEntry)

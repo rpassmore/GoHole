@@ -11,8 +11,8 @@ import (
 
 	"GoHole/config"
 	"GoHole/dnscache"
-	"GoHole/logs"
 	"GoHole/encryption"
+	"GoHole/logs"
 )
 
 type DnsServer struct {
@@ -23,15 +23,15 @@ func (dnsServer *DnsServer) parseQuery(clientIp string, m *dns.Msg) {
 	for _, q := range m.Question {
 		var err error = nil
 		var ip = ""
-		cleanedName := q.Name[0:len(q.Name)-1] // remove the end "."
+		cleanedName := q.Name[0 : len(q.Name)-1] // remove the end "."
 		qType := "A"
 		isCached := false
 		isBlocked := false
 		isIpv4 := true
 
-		if q.Qtype == dns.TypeA{
+		if q.Qtype == dns.TypeA {
 			ip, isBlocked, err = dnscache.GetDomainIPv4(cleanedName)
-		}else if q.Qtype == dns.TypeAAAA{
+		} else if q.Qtype == dns.TypeAAAA {
 			ip, isBlocked, err = dnscache.GetDomainIPv6(cleanedName)
 			qType = "AAAA"
 			isIpv4 = false
@@ -43,38 +43,38 @@ func (dnsServer *DnsServer) parseQuery(clientIp string, m *dns.Msg) {
 				m.Answer = append(m.Answer, rr)
 			}
 			isCached = true
-		}else{
+		} else {
 			// Request to a DNS server
 			c := new(dns.Client)
 			msg := new(dns.Msg)
 			msg.SetQuestion(dns.Fqdn(q.Name), q.Qtype)
 			msg.RecursionDesired = true
 
-		    r, _, err := c.Exchange(msg, net.JoinHostPort(config.GetInstance().UpstreamDNSServer, "53"))
-		    if r == nil {
-		    	log.Printf("*** error: %s\n", err.Error())
-		    	return
-		    }
+			r, _, err := c.Exchange(msg, net.JoinHostPort(config.GetInstance().UpstreamDNSServer, "53"))
+			if r == nil {
+				log.Printf("*** error: %s\n", err.Error())
+				return
+			}
 
-		    if r.Rcode != dns.RcodeSuccess {
-		    	log.Printf(" *** invalid answer name %s after %s query for %s\n", q.Name, qType, q.Name)
-		    	return
-		    }
-		    // Parse Answer
-		    for _, a := range r.Answer {
-		    	ans := strings.Split(a.String(), "\t")
-		    	if len(ans) == 5 && ans[3] == qType{
-		    		// Save on cache
-		    		if q.Qtype == dns.TypeA{
-		    			dnscache.AddDomainIPv4(cleanedName, ans[4], true)
-					}else if q.Qtype == dns.TypeAAAA{
+			if r.Rcode != dns.RcodeSuccess {
+				log.Printf(" *** invalid answer name %s after %s query for %s\n", q.Name, qType, q.Name)
+				return
+			}
+			// Parse Answer
+			for _, a := range r.Answer {
+				ans := strings.Split(a.String(), "\t")
+				if len(ans) == 5 && ans[3] == qType {
+					// Save on cache
+					if q.Qtype == dns.TypeA {
+						dnscache.AddDomainIPv4(cleanedName, ans[4], true)
+					} else if q.Qtype == dns.TypeAAAA {
 						dnscache.AddDomainIPv6(cleanedName, ans[4], true)
 					}
-		    	}
-		    }
-		    // Set answer for the client
-		    m.Answer = r.Answer
-		    isCached = false
+				}
+			}
+			// Set answer for the client
+			m.Answer = r.Answer
+			isCached = false
 		}
 
 		// Add logs
@@ -100,32 +100,32 @@ func (dnsServer *DnsServer) handleDnsRequest(w dns.ResponseWriter, r *dns.Msg) {
 	w.WriteMsg(m)
 }
 
-func (dnsServer *DnsServer) handleSecureDnsRequest(conn *net.UDPConn, buf []byte, addr net.UDPAddr){
+func (dnsServer *DnsServer) handleSecureDnsRequest(conn *net.UDPConn, buf []byte, addr net.UDPAddr) {
 	query, err := encryption.Decrypt(buf)
-    if err != nil{
-    	return
-    }
+	if err != nil {
+		return
+	}
 
-    m := new(dns.Msg)
-    m.Unpack(query)
-    clientIp := addr.String()
-    clientIp = clientIp[0:strings.LastIndex(clientIp, ":")] // remove port
+	m := new(dns.Msg)
+	m.Unpack(query)
+	clientIp := addr.String()
+	clientIp = clientIp[0:strings.LastIndex(clientIp, ":")] // remove port
 	dnsServer.parseQuery(clientIp, m)
 
-    reply, err := m.Pack()
-    if err != nil{
-    	return
-    }
-    eReply, err := encryption.Encrypt(reply)
-    if err != nil{
-    	return
-    }
+	reply, err := m.Pack()
+	if err != nil {
+		return
+	}
+	eReply, err := encryption.Encrypt(reply)
+	if err != nil {
+		return
+	}
 
-    conn.WriteToUDP(eReply, &addr)
+	conn.WriteToUDP(eReply, &addr)
 }
 
-func (dnsServer *DnsServer) listenAndServeSecure(){
-	serverAddr, err := net.ResolveUDPAddr("udp",":"+ config.GetInstance().SecureDNSPort)
+func (dnsServer *DnsServer) listenAndServeSecure() {
+	serverAddr, err := net.ResolveUDPAddr("udp", ":"+config.GetInstance().SecureDNSPort)
 	if err != nil {
 		log.Fatalf("Failed to start DNS Secure Server: %s\n", err)
 	}
@@ -138,22 +138,22 @@ func (dnsServer *DnsServer) listenAndServeSecure(){
 	log.Printf("Starting Secure DNS Server at %s\n", config.GetInstance().SecureDNSPort)
 
 	//simple read
-	for{
+	for {
 		buf := make([]byte, 2048)
 		n, addr, err := conn.ReadFromUDP(buf)
-        if err != nil {
-            continue
-        }
+		if err != nil {
+			continue
+		}
 
-        go dnsServer.handleSecureDnsRequest(conn, buf[:n], *addr)
+		go dnsServer.handleSecureDnsRequest(conn, buf[:n], *addr)
 	}
 }
 
 func NewDnsServer(dbLogs logs.DBLogs) *DnsServer {
-  return &DnsServer{dbLogs:dbLogs}
+	return &DnsServer{dbLogs: dbLogs}
 }
 
-func (dnsServer *DnsServer) ListenAndServe(){
+func (dnsServer *DnsServer) ListenAndServe() {
 
 	// add go.hole domain to our cache :)
 	dnscache.AddDomainIPv4("go.hole", config.GetInstance().ServerIP, false)
@@ -165,13 +165,12 @@ func (dnsServer *DnsServer) ListenAndServe(){
 	// Start DNS server
 	port := config.GetInstance().DNSPort
 
-
 	ief, err := net.InterfaceByName(config.GetInstance().Interface)
-	if err !=nil{
+	if err != nil {
 		log.Fatal(err)
 	}
 	addrs, err := ief.Addrs()
-	if err !=nil{
+	if err != nil {
 		log.Fatal(err)
 	}
 

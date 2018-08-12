@@ -4,19 +4,19 @@ import (
 	"strconv"
 	"time"
 
-    "github.com/marpaia/graphite-golang"
+	"github.com/marpaia/graphite-golang"
 
-    "GoHole/config"
+	"GoHole/config"
 )
 
 type Statistics struct {
-    Total int
-    Blocked int
-    NonBlocked int
-    Cached int
-    NonCached int
-    Ipv4 int
-    Ipv6 int
+	Total      int
+	Blocked    int
+	NonBlocked int
+	Cached     int
+	NonCached  int
+	Ipv4       int
+	Ipv6       int
 }
 
 var statsInstance *Statistics = nil
@@ -31,51 +31,51 @@ func getGraphiteInstance() *graphite.Graphite {
 		instance = nil
 	}
 
-    return instance
+	return instance
 }
 
 func getStatsInstance() *Statistics {
-	if statsInstance == nil{
+	if statsInstance == nil {
 		statsInstance = &Statistics{
-			Total:0,
-			Blocked:0,
-			NonBlocked:0,
-			Cached:0,
-			NonCached:0,
-			Ipv4:0,
-			Ipv6:0,
+			Total:      0,
+			Blocked:    0,
+			NonBlocked: 0,
+			Cached:     0,
+			NonCached:  0,
+			Ipv4:       0,
+			Ipv6:       0,
 		}
 	}
 
-    return statsInstance
+	return statsInstance
 }
 
-func AddQueryToGraphite(isBlocked, isIpv4, isCached bool){
+func AddQueryToGraphite(isBlocked, isIpv4, isCached bool) {
 	stats := getStatsInstance()
 	stats.Total += 1
 	// add query to blocked/non-blocked query metric
 	if isBlocked {
 		stats.Blocked += 1
-	}else{
+	} else {
 		stats.NonBlocked += 1
 	}
 
 	// add query to ipv4/ipv6 query metric
 	if isIpv4 {
 		stats.Ipv4 += 1
-	}else{
+	} else {
 		stats.Ipv6 += 1
 	}
 
 	// add query to cached/non-cached query metric
 	if isCached {
 		stats.Cached += 1
-	}else{
+	} else {
 		stats.NonCached += 1
 	}
 }
 
-func resetStats(){
+func resetStats() {
 	stats := getStatsInstance()
 	stats.Total = 0
 	stats.Blocked = 0
@@ -86,13 +86,13 @@ func resetStats(){
 	stats.Ipv6 = 0
 }
 
-func sendQueriesToGraphite(){
+func sendQueriesToGraphite() {
 	// The user should configure the graph to "summarize" (sum)
 	// the metrics in order to see better graphs :)
 
 	stats := getStatsInstance()
 	Graphite := getGraphiteInstance()
-	if Graphite == nil{
+	if Graphite == nil {
 		return
 	}
 
@@ -115,11 +115,10 @@ func sendQueriesToGraphite(){
 	Graphite.Disconnect()
 }
 
-func StartStatsLoop(){
+func StartStatsLoop() {
 	// loop in which every 30s we send the stats to Graphite
-	for{
+	for {
 		time.Sleep(time.Duration(30) * time.Second)
 		sendQueriesToGraphite()
 	}
 }
-
