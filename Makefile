@@ -1,7 +1,7 @@
-BUILD=go build
+BUILD=CGO_ENABLED=0 go build
 COMMIT=`git describe --always --long`
 CDATE=`date +%FT%T%z`
-LDFLAGS=-ldflags="-X main.Commit=${COMMIT} -X main.CompilationDate=${CDATE}"
+LDFLAGS=-ldflags="-s -w -X main.Commit=${COMMIT} -X main.CompilationDate=${CDATE}" -a -installsuffix cgo
 
 default: linux
 

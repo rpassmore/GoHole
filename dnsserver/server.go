@@ -1,21 +1,25 @@
 package dnsserver
 
 import (
-    "fmt"
+	"fmt"
 	"log"
 	"net"
 	"strings"
 	"time"
 
-    "github.com/miekg/dns"
+	"github.com/miekg/dns"
 
-    "GoHole/config"
-    "GoHole/dnscache"
-    "GoHole/logs"
-    "GoHole/encryption"
+	"GoHole/config"
+	"GoHole/dnscache"
+	"GoHole/logs"
+	"GoHole/encryption"
 )
 
-func parseQuery(clientIp string, m *dns.Msg) {
+type DnsServer struct {
+	dbLogs logs.DBLogs
+}
+
+func (dnsServer *DnsServer) parseQuery(clientIp string, m *dns.Msg) {
 	for _, q := range m.Question {
 		var err error = nil
 		var ip = ""
@@ -74,14 +78,14 @@ func parseQuery(clientIp string, m *dns.Msg) {
 		}
 
 		// Add logs
-		logs.AddQuery(clientIp, cleanedName, isCached, time.Now())
+		dnsServer.dbLogs.AddQuery(clientIp, cleanedName, isCached, isBlocked, time.Now())
 		go logs.AddQueryToGraphite(isBlocked, isIpv4, isCached)
 
-		log.Printf("Query for %s from %s, blocked : %s, cached : %s", q.Name, clientIp, isBlocked, isCached)
+		log.Printf("Query for %s from %s, blocked : %v, cached : %v", q.Name, clientIp, isBlocked, isCached)
 	}
 }
 
-func handleDnsRequest(w dns.ResponseWriter, r *dns.Msg) {
+func (dnsServer *DnsServer) handleDnsRequest(w dns.ResponseWriter, r *dns.Msg) {
 	m := new(dns.Msg)
 	m.SetReply(r)
 	m.Compress = false
@@ -90,13 +94,13 @@ func handleDnsRequest(w dns.ResponseWriter, r *dns.Msg) {
 
 	switch r.Opcode {
 	case dns.OpcodeQuery:
-		parseQuery(clientIp, m)
+		dnsServer.parseQuery(clientIp, m)
 	}
 
 	w.WriteMsg(m)
 }
 
-func handleSecureDnsRequest(conn *net.UDPConn, buf []byte, addr net.UDPAddr){
+func (dnsServer *DnsServer) handleSecureDnsRequest(conn *net.UDPConn, buf []byte, addr net.UDPAddr){
 	query, err := encryption.Decrypt(buf)
     if err != nil{
     	return
@@ -106,7 +110,7 @@ func handleSecureDnsRequest(conn *net.UDPConn, buf []byte, addr net.UDPAddr){
     m.Unpack(query)
     clientIp := addr.String()
     clientIp = clientIp[0:strings.LastIndex(clientIp, ":")] // remove port
-    parseQuery(clientIp, m)
+	dnsServer.parseQuery(clientIp, m)
 
     reply, err := m.Pack()
     if err != nil{
@@ -120,7 +124,7 @@ func handleSecureDnsRequest(conn *net.UDPConn, buf []byte, addr net.UDPAddr){
     conn.WriteToUDP(eReply, &addr)
 }
 
-func listenAndServeSecure(){
+func (dnsServer *DnsServer) listenAndServeSecure(){
 	serverAddr, err := net.ResolveUDPAddr("udp",":"+ config.GetInstance().SecureDNSPort)
 	if err != nil {
 		log.Fatalf("Failed to start DNS Secure Server: %s\n", err)
@@ -141,11 +145,15 @@ func listenAndServeSecure(){
             continue
         }
 
-        go handleSecureDnsRequest(conn, buf[:n], *addr)
+        go dnsServer.handleSecureDnsRequest(conn, buf[:n], *addr)
 	}
 }
 
-func ListenAndServe(){
+func NewDnsServer(dbLogs logs.DBLogs) *DnsServer {
+  return &DnsServer{dbLogs:dbLogs}
+}
+
+func (dnsServer *DnsServer) ListenAndServe(){
 
 	// add go.hole domain to our cache :)
 	dnscache.AddDomainIPv4("go.hole", config.GetInstance().ServerIP, false)
@@ -153,7 +161,7 @@ func ListenAndServe(){
 	// start the graphite statistics loop
 	go logs.StartStatsLoop()
 
-	dns.HandleFunc(".", handleDnsRequest)
+	dns.HandleFunc(".", dnsServer.handleDnsRequest)
 	// Start DNS server
 	port := config.GetInstance().DNSPort
 
@@ -173,9 +181,8 @@ func ListenAndServe(){
 
 	//server := &dns.Server{Addr: ":" + port, Net: "udp"}
 
-
 	log.Printf("Starting at %s\n", port)
-	go listenAndServeSecure()
+	go dnsServer.listenAndServeSecure()
 
 	err = server.ListenAndServe()
 	defer server.Shutdown()

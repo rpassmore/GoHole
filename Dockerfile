@@ -18,9 +18,9 @@ RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -a -installsuffix cgo -o 
 
 ###################################
 # Execution container
-#FROM arm32v6/alpine
+FROM arm32v6/alpine
 #FROM alpine
-FROM scratch
+#FROM scratch
 
 WORKDIR /root/
 COPY --from=go-builder /app/go/src/GoHole/gohole .
@@ -28,6 +28,7 @@ COPY blacklists .
 COPY grafana .
 COPY config_example.json ./config.json
 
+EXPOSE 8080 8080/tcp
 EXPOSE 53 53/udp
 EXPOSE 443 443/udp
 ENTRYPOINT ["/root/gohole", "-gkey", "-s", "-c", "/root/config.json", "-abl", "/root/list.txt"]
