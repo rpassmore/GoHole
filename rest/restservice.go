@@ -4,10 +4,11 @@ import (
 	"GoHole/domainLists"
 	"GoHole/logs"
 	"encoding/json"
-	"github.com/gorilla/mux"
+	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/middleware"
 	"log"
 	"net/http"
-	"strconv"
+
 	"time"
 )
 
@@ -19,30 +20,35 @@ type RestService struct {
 func NewRestService(dbLogs logs.DBLogs, dLists *domainLists.DomainList) *RestService {
 	restService := RestService{dbLogs, dLists}
 
-	router := mux.NewRouter()
-	router.HandleFunc("/latest_query", restService.GetLatestQuery).Methods("GET")
-	router.HandleFunc("/top_clients", restService.GetTopClients).Methods("GET")
-	router.HandleFunc("/top_domains", restService.GetTopDomains).Queries("limit", "{limit}").Methods("GET")
-	router.HandleFunc("/top_blocked_domains", restService.GetTopBlockedDomains).Queries("blocked", "{blocked}", "limit", "{limit}").Methods("GET")
-	router.HandleFunc("/count_queries_blocked", restService.GetCountQueriesBlocked).Methods("GET")
-	router.HandleFunc("/queries_last_24hrs", restService.GetQueriesLast24hrs).Methods("GET")
-	router.HandleFunc("/count_queries", restService.GetCountQueries).Methods("GET")
+	router := chi.NewRouter()
+	router.Use(middleware.RequestID)
+	router.Use(middleware.RealIP)
+	router.Use(middleware.Logger)
+	router.Use(middleware.Recoverer)
 
-	router.HandleFunc("/queries_for_client/{clientIp}", restService.GetQueriesByClientIp).Queries("limit", "{limit}").Methods("GET")
-	router.HandleFunc("/queries_by_domain/{domain}", restService.GetQueriesByDomain).Methods("GET")
+	router.Get("/latestQuery", restService.GetLatestQueryHandler)
+	router.Get("/topClients", restService.GetTopClientsHandler)
+	router.Get("/topDomains", restService.GetTopDomainsHandler)
+	router.Get("/topBlockedDomains", restService.GetTopBlockedDomainsHandler)
+	router.Get("/countQueriesBlocked", restService.GetCountQueriesBlockedHandler)
+	router.Get("/queriesLast24hrs", restService.GetQueriesLast24hrsHandler)
+	router.Get("/countQueries", restService.GetCountQueriesHandler)
+
+	router.Get("/queriesForClient/{clientIp}", restService.GetQueriesByClientIpHandler)
+	router.Get("/queriesByDomain/{domain}", restService.GetQueriesByDomainHandler)
 	log.Fatal(http.ListenAndServe(":8080", router))
 	return &restService
 }
 
 func (rest *RestService) getLimit(r *http.Request) int {
-	limit, err := strconv.Atoi(r.FormValue("limit"))
-	if err != nil {
+	limit, ok := r.Context().Value("limit").(int)
+	if !ok {
 		limit = -1
 	}
 	return limit
 }
 
-func (rest *RestService) GetCountQueriesBlocked(w http.ResponseWriter, r *http.Request) {
+func (rest *RestService) GetCountQueriesBlockedHandler(w http.ResponseWriter, r *http.Request) {
 	total, blocked, cached, err := rest.DBLogs.CountQueriesBlocked()
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
@@ -57,7 +63,7 @@ func (rest *RestService) GetCountQueriesBlocked(w http.ResponseWriter, r *http.R
 	json.NewEncoder(w).Encode(totals)
 }
 
-func (rest *RestService) GetQueriesLast24hrs(w http.ResponseWriter, r *http.Request) {
+func (rest *RestService) GetQueriesLast24hrsHandler(w http.ResponseWriter, r *http.Request) {
 	queryLogs, err := rest.DBLogs.GetQueriesSince(time.Now().Add(-24 * time.Hour))
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
@@ -66,7 +72,7 @@ func (rest *RestService) GetQueriesLast24hrs(w http.ResponseWriter, r *http.Requ
 	json.NewEncoder(w).Encode(queryLogs)
 }
 
-func (rest *RestService) GetCountQueries(w http.ResponseWriter, r *http.Request) {
+func (rest *RestService) GetCountQueriesHandler(w http.ResponseWriter, r *http.Request) {
 	count, err := rest.DBLogs.CountQueries()
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
@@ -75,10 +81,8 @@ func (rest *RestService) GetCountQueries(w http.ResponseWriter, r *http.Request)
 	json.NewEncoder(w).Encode(&count)
 }
 
-func (rest *RestService) GetQueriesByDomain(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-
-	queryLogs, err := rest.DBLogs.GetQueriesByDomain(vars["domain"])
+func (rest *RestService) GetQueriesByDomainHandler(w http.ResponseWriter, r *http.Request) {
+	queryLogs, err := rest.DBLogs.GetQueriesByDomain(chi.URLParam(r, "domain"))
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte(err.Error()))
@@ -86,10 +90,8 @@ func (rest *RestService) GetQueriesByDomain(w http.ResponseWriter, r *http.Reque
 	json.NewEncoder(w).Encode(queryLogs)
 }
 
-func (rest *RestService) GetQueriesByClientIp(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-
-	queryLogs, err := rest.DBLogs.GetQueriesByClientIp(vars["clientIp"], rest.getLimit(r))
+func (rest *RestService) GetQueriesByClientIpHandler(w http.ResponseWriter, r *http.Request) {
+	queryLogs, err := rest.DBLogs.GetQueriesByClientIp(chi.URLParam(r, "clientIp"), rest.getLimit(r))
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte(err.Error()))
@@ -97,7 +99,7 @@ func (rest *RestService) GetQueriesByClientIp(w http.ResponseWriter, r *http.Req
 	json.NewEncoder(w).Encode(queryLogs)
 }
 
-func (rest *RestService) GetLatestQuery(w http.ResponseWriter, r *http.Request) {
+func (rest *RestService) GetLatestQueryHandler(w http.ResponseWriter, r *http.Request) {
 	queryLogs, err := rest.DBLogs.GetLatestQuery()
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
@@ -106,7 +108,7 @@ func (rest *RestService) GetLatestQuery(w http.ResponseWriter, r *http.Request) 
 	json.NewEncoder(w).Encode(queryLogs)
 }
 
-func (rest *RestService) GetTopClients(w http.ResponseWriter, r *http.Request) {
+func (rest *RestService) GetTopClientsHandler(w http.ResponseWriter, r *http.Request) {
 	queryLogs, err := rest.DBLogs.GetTopClients()
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
@@ -115,7 +117,7 @@ func (rest *RestService) GetTopClients(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(queryLogs)
 }
 
-func (rest *RestService) GetTopDomains(w http.ResponseWriter, r *http.Request) {
+func (rest *RestService) GetTopDomainsHandler(w http.ResponseWriter, r *http.Request) {
 	queryLogs, err := rest.DBLogs.GetTopDomains(rest.getLimit(r))
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
@@ -124,7 +126,7 @@ func (rest *RestService) GetTopDomains(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(queryLogs)
 }
 
-func (rest *RestService) GetTopBlockedDomains(w http.ResponseWriter, r *http.Request) {
+func (rest *RestService) GetTopBlockedDomainsHandler(w http.ResponseWriter, r *http.Request) {
 	queryLogs, err := rest.DBLogs.GetTopDomainsBlocked(rest.getLimit(r), true)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)

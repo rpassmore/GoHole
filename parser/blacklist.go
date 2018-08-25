@@ -52,7 +52,7 @@ func ParseBlacklistFile(path string) error {
 				parsedLine[1] = strings.Replace(parsedLine[1], " ", "", -1)
 				parsedLine[1] = strings.Replace(parsedLine[1], "\t", "", -1)
 
-				fmt.Printf("\nDomain %s blocked with %s", parsedLine[1], parsedLine[0])
+				//fmt.Printf("\nDomain %s blocked with %s", parsedLine[1], parsedLine[0])
 
 				dnscache.AddDomainIPv4(parsedLine[1], "0.0.0.0" /*parsedLine[0]*/, false)
 				dnscache.AddDomainIPv6(parsedLine[1], "::1", false) // by default ad lists doesn't include ipv6 block..
@@ -100,6 +100,6 @@ func ParseBlacklistsListFile(path string) error {
 			ParseBlacklistFile(line)
 		}
 	}
-
+	fmt.Printf("Blocking %d domains\n", dnscache.GetInstance().ItemCount())
 	return nil
 }

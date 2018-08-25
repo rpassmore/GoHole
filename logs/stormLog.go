@@ -1,6 +1,7 @@
 package logs
 
 import (
+	"fmt"
 	"github.com/asdine/storm/q"
 	"log"
 	"os/user"
@@ -41,13 +42,13 @@ type QueryLog struct {
 
 type ClientLog struct {
 	ClientIp string `storm:"id,unique"`
-	Queries  int    `storm:"index"`
+	Queries  int `storm:"index"`
 	Blocks   int
 }
 
 type DomainLog struct {
 	Domain  string `storm:"id,unique"`
-	Queries int
+	Queries int `storm:"index"`
 	Blocked bool
 }
 
@@ -84,23 +85,28 @@ func (dbLogs *dbLogsImpl) AddQuery(clientIp string, domain string, cached bool, 
 	}
 
 	err = dbLogs.AddDomain(domain, blocked)
+	fmt.Println("done", err)
 	return err
 }
 
 func (dbLogs *dbLogsImpl) AddClientIp(clientIp string, blocked bool) error {
 	var clientLog ClientLog
 	err := dbLogs.db.One("ClientIp", clientIp, &clientLog)
-	if err == nil {
+	if err != nil {
 		clientLog.ClientIp = clientIp
 		clientLog.Queries = 0
-	}
+		clientLog.Blocks = 0
+		fmt.Println("saving ", clientLog)
+		err = dbLogs.db.Save(&clientLog)
+	} else {
+		if blocked {
+			clientLog.Blocks = clientLog.Blocks + 1
+		}
 
-	if blocked {
-		clientLog.Blocks = clientLog.Blocks + 1
+		clientLog.Queries = clientLog.Queries + 1
+		fmt.Println("update ", clientLog)
+		err = dbLogs.db.Update(&clientLog)
 	}
-
-	clientLog.Queries = clientLog.Queries + 1
-	err = dbLogs.db.Save(&clientLog)
 	return err
 }
 
@@ -110,11 +116,14 @@ func (dbLogs *dbLogsImpl) AddDomain(domain string, blocked bool) error {
 	if err != nil {
 		domainLog.Domain = domain
 		domainLog.Queries = 0
+		fmt.Println("saving ", domainLog)
+		dbLogs.db.Save(&domainLog)
+	} else {
+		domainLog.Queries = domainLog.Queries + 1
+		domainLog.Blocked = blocked
+		fmt.Println("update ", domainLog)
+		err = dbLogs.db.Update(&domainLog)
 	}
-
-	domainLog.Queries = domainLog.Queries + 1
-	domainLog.Blocked = blocked
-	err = dbLogs.db.Save(&domainLog)
 	return err
 }
 
@@ -175,13 +184,14 @@ func (dbLogs *dbLogsImpl) GetQueriesByDomain(domain string) ([]QueryLog, error) 
 
 func (dbLogs *dbLogsImpl) GetTopClients() ([]ClientLog, error) {
 	var clientLogs []ClientLog
-	err := dbLogs.db.Select(q.Gte("Queries", 0)).OrderBy("Queries").Reverse().Find(&clientLogs)
+	err := dbLogs.db.All(&clientLogs)
+	//err := dbLogs.db.Select().OrderBy("Queries").Reverse().Find(&clientLogs)
 	return clientLogs, err
 }
 
 func (dbLogs *dbLogsImpl) GetTopDomains(limit int) ([]DomainLog, error) {
 	var domainLogs []DomainLog
-	err := dbLogs.db.Select(q.Gte("Queries", 0)).OrderBy("Queries").Reverse().Limit(limit).Find(&domainLogs)
+	err := dbLogs.db.Select().OrderBy("Queries").Reverse().Limit(limit).Find(&domainLogs)
 	return domainLogs, err
 }
 

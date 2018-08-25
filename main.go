@@ -30,11 +30,6 @@ import (
 */
 const GOHOLE_VERSION = "1.1.0"
 
-type app struct {
-	logs.DBLogs
-	*domainLists.DomainList
-}
-
 var (
 	Commit          string
 	CompilationDate string
